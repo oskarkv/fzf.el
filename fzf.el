@@ -54,6 +54,7 @@
   :type 'string
   :group 'fzf)
 
+;; Adding --print-query puts the output on a new line.
 (defcustom fzf/args "-x --color bw --margin 1,0"
   "Additional arguments to pass into fzf."
   :type 'string
