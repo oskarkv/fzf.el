@@ -64,21 +64,24 @@
   :type 'bool
   :group 'fzf)
 
+(defun fzf/save-last-output (proc s)
+  (let* ((s2 (car (last (split-string s "\\[?1000l" t "[\s\n]+")))))
+    (setq fzf--last-output s2)))
+
 (defun fzf/after-term-handle-exit (process-name msg)
-  (let* ((text (buffer-substring-no-properties (point-min) (point-max)))
-         (lines (split-string text "\n" t "\s.*\s"))
-         (target (car (last (butlast lines 1))))
-         (file (expand-file-name target)))
+  (let ((file fzf--last-output))
     (kill-buffer "*fzf*")
     (jump-to-register :fzf-windows)
     (when (file-exists-p file)
       (find-file file)))
-  (advice-remove 'term-handle-exit #'fzf/after-term-handle-exit))
+  (advice-remove 'term-handle-exit #'fzf/after-term-handle-exit)
+  (advice-remove 'term-emulate-terminal #'fzf/save-last-output))
 
 (defun fzf/start (directory)
   (require 'term)
   (window-configuration-to-register :fzf-windows)
   (advice-add 'term-handle-exit :after #'fzf/after-term-handle-exit)
+  (advice-add 'term-emulate-terminal :before #'fzf/save-last-output)
   (let ((buf (get-buffer-create "*fzf*"))
         (window-height (if fzf/position-bottom (- fzf/window-height) fzf/window-height)))
     (with-current-buffer buf
